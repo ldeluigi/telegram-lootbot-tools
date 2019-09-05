@@ -128,7 +128,7 @@ else if (!$fname or $fname == "") {
 			$item = $qry_elems[1];
 		}
 	}
-	$text= craft_list($item);
+	$text= craft_list($item, $n_item);
 	if (!$text or $text == "")
 		qm("Non stai seguendo nessuna lista.");
 	else {
