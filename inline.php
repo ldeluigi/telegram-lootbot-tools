@@ -118,6 +118,16 @@ if ($msg == "reset") {
 else if (!$fname or $fname == "") {
 	$dir = 'Lists/';
 	$item = $msg;
+	$n_item = 1;
+	if(preg_match('/^\d+:/',$item) === 1)
+	{
+		$qry_elems = explode(':', $item, 2);
+		if(count($qry_elems) > 1)
+		{
+			$n_item = $qry_elems[0];
+			$item = $qry_elems[1];
+		}
+	}
 	$text= craft_list($item);
 	if (!$text or $text == "")
 		qm("Non stai seguendo nessuna lista.");

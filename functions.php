@@ -919,19 +919,30 @@ function getName($itemID) {
 	return $s['name'];
 }
 
-function craft_list_id($itemID) {
+function craft_list_id($itemID, $n_item) {
 	if (!$itemID or $itemID<0)
 		return false;
 	if ($itemID == 0)
 		return false;
-	$materiali = getMateriali($itemID);
+	$materiali = array();
+	for($i=0;$i<$n_item;$i++)
+	{
+		$tempmat = getMateriali($itemID);
+		if(is_array($tempmat))
+			$materiali = array_merge($materiali, $tempmat);
+			//foreach($tempmat as $mat)
+			//	$materiali[] = $mat;
+	}
 	if (count($materiali) == 0)
 		return "";
 	foreach ($materiali as $matID) {
-		$temp_l = craft_list_id($matID);
+		$temp_l = craft_list_id($matID, 1);
 		if ($temp_l and strlen($temp_l)>0) $mat_list[] = $temp_l;
 	}
-	return (count($mat_list)>0 ? implode("\n", $mat_list)."\n" : "").getName($itemID);
+	$rettxt = (count($mat_list)>0 ? implode("\n", $mat_list)."\n" : "");
+	for($i=0;$i<$n_item;$i++)
+		$rettxt .= getName($itemID)."\n";
+	return substr($rettxt,0,strlen($rettxt)-1);
 }
 
 function mat_list_id_id($itemID) {
@@ -949,7 +960,7 @@ function mat_list_id_id($itemID) {
 	return (count($mat_list)>0 ? implode("\n", $mat_list) : "$itemID");
 }
 
-function craft_list($item) {
+function craft_list($item, $n_item=1) {
 	if (!$item or strlen($item)<1)
 		return false;
 	$item = preg_replace("/[^\w\dàèìòù ']/", "", $item);
@@ -957,7 +968,8 @@ function craft_list($item) {
 	if ($itemID == "n/a (not found)") {
 		return false;
 	}
-	$cl = craft_list_id($itemID);
+	$cl = "";
+	$cl = craft_list_id($itemID, $n_item);
 	if (!$cl or $cl == "") {
 		return "Cerca *$item";
 	}
