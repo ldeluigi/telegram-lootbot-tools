@@ -968,7 +968,6 @@ function craft_list($item, $n_item=1) {
 	if ($itemID == "n/a (not found)") {
 		return false;
 	}
-	$cl = "";
 	$cl = craft_list_id($itemID, $n_item);
 	if (!$cl or $cl == "") {
 		return "Cerca *$item";
