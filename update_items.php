@@ -12,8 +12,8 @@ function richiesta_API($url)
         return $result;
 }
 }
-$mysqli = mysqli_connect("127.0.0.1", "tools", "hN5YxEpzG9tzo4m", "tools"); // Inserire il nome del database del bot
-$token = 'h4KMUhwMuW9hLKEQ15283'; // Inserire il token delle API di loot bot
+$mysqli = mysqli_connect("DB_HOST", "DB_USER", "DB_PWD", "DB_NAME"); // Inserire il nome del database del bot
+$token = 'LOOT_API_TOKEN'; // Inserire il token delle API di loot bot
 $items = richiesta_API("http://fenixweb.net:3300/api/v2/$token/items");
 $dec = json_decode($items, true);
 if (!is_array($dec)) return;

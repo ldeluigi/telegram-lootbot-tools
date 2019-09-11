@@ -91,7 +91,7 @@ $entities = $update["callback_query"]["message"]["entities"];
 }
 
 
-$token = 'h4KMUhwMuW9hLKEQ15283';
+$token = 'LOOT_API_TOKEN';
 $menu[] = array(
     	array(
 			"text" => "🎒",

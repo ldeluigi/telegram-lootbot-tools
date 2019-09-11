@@ -12,8 +12,8 @@ function richiesta_API($url)
         return $result;
 }
 }
-$mysqli = mysqli_connect("127.0.0.1", "tools", "hN5YxEpzG9tzo4m", "tools");
-$token = 'h4KMUhwMuW9hLKEQ15283'; // your token
+$mysqli = mysqli_connect("DB_HOST", "DB_USER", "DB_PWD", "DB_NAME");
+$token = 'LOOT_API_TOKEN'; // your token
 $global = richiesta_API("https://fenixweb.net:6600/api/v2/$token/info");
 echo $global;
 $dec = json_decode($global, true);
