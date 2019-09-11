@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 if($config['funziona_nei_canali'])
 {
@@ -91,7 +91,7 @@ $entities = $update["callback_query"]["message"]["entities"];
 }
 
 
-$token = 'token';
+$token = 'h4KMUhwMuW9hLKEQ15283';
 $menu[] = array(
     	array(
 			"text" => "🎒",
@@ -605,15 +605,16 @@ function richiestaAPI($url)
 }
 
 function getRarity($item) {
+	global $mysqli;
     if (mb_strpos($item, " (")!==false) {
         $item = mb_substr($item, 0, mb_strpos($item, " ("));
     }
 	if (mb_strpos(strtolower($item), "pozione")!==false) {
         return "Pozioni";
     }
-	$item_q = mysql_query(utf8_decode("SELECT * FROM items WHERE name=\"$item\""));
-	while ($i = mysql_fetch_assoc($item_q)) {
-        if (utf8_encode($i['name']) == $item) {
+	$item_q = mysqli_query($mysqli,"SELECT * FROM items WHERE name=\"$item\"");
+	while ($i = mysqli_fetch_assoc($item_q)) {
+        if ($i['name'] == $item) {
 			if ($i['craftable'] == 0)
 				return ((string) $i["rarity"]);
 			else return "Craftable";
@@ -626,9 +627,10 @@ function getPrice($item) {
 	if (mb_strpos($item, " (")!==false) {
         $item = mb_substr($item, 0, mb_strpos($item, " ("));
     }
-	$item_q = mysql_query(utf8_decode("SELECT * FROM items WHERE name=\"$item\""));
-	while ($i = mysql_fetch_assoc($item_q)) {
-        if (utf8_encode($i['name']) == $item) {
+	global $mysqli;
+	$item_q = mysqli_query($mysqli,"SELECT * FROM items WHERE name=\"$item\"");
+	while ($i = mysqli_fetch_assoc($item_q)) {
+        if ($i['name'] == $item) {
 			return ((string) $i['value']);
         }
 		$b = $i;
@@ -640,9 +642,10 @@ function getID($item) {
 	if (mb_strpos($item, " (")!==false) {
         $item = mb_substr($item, 0, mb_strpos($item, " ("));
     }
-	$item_q = mysql_query(utf8_decode("SELECT * FROM items WHERE name=\"$item\""));
-	while ($i = mysql_fetch_assoc($item_q)) {
-        if (strtolower(utf8_encode($i['name'])) == strtolower($item)) {
+	global $mysqli;
+	$item_q = mysqli_query($mysqli, "SELECT * FROM items WHERE name=\"$item\"");
+	while ($i = mysqli_fetch_assoc($item_q)) {
+        if (strtolower($i['name']) == strtolower($item)) {
 			return ((int) $i['id']);
         }
     }
@@ -661,16 +664,16 @@ function searchStrings($r) {
 	global $chatID;
     global $userID;
     global $username;
-    global $userbot;
-	$q = mysql_query("SELECT * FROM items WHERE rarity=\"$r\" AND craftable=0 AND allow_sell=1");
-	$n = mysql_num_rows($q);
+	global $mysqli;
+	$q = mysqli_query($mysqli,"SELECT * FROM items WHERE rarity=\"$r\" AND craftable=0 AND allow_sell=1");
+	$n = mysqli_num_rows($q);
 	if ($q and $n>0) {
 		$arr = [];
 		$rows = [];
 		$counter = 0;
-		while ($b = mysql_fetch_assoc($q)) {
+		while ($b = mysqli_fetch_assoc($q)) {
 			$arr[$counter] = $b;
-			$rows[$counter].= utf8_encode($b['name']).",";
+			$rows[$counter].= ($b['name']).",";
 			$counter++;
 		}
 		sort($rows, SORT_STRING);
@@ -700,7 +703,7 @@ function searchStrings($r) {
 			}
 			$fname = $dir."_".strtolower($item."--".time()."--.txt");
 			file_put_contents($fname, $text);
-			if (mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"$fname\" WHERE userID=$userID")) {
+			if (mysqli_query($mysqli,"UPDATE ToolsForLootBot SET crafting_index=0,crafting_list=\"$fname\" WHERE userID=$userID")) {
 				sm($chatID, "Lista Ricerca $r caricata con successo.", array(array(array("text" => "Inizia", "switch_inline_query" => " "))));
 			} else {
 				sm($chatID, "Lista Ricerca $r non caricata con successo. Puoi segnalare il problema a @Delooo.");
@@ -759,6 +762,8 @@ function getRoom($id, $emoji = false) {
             case 35: return "⏳";
             case 36: return "🧗‍♂";
             case 37: return "🌪️";
+			case 38: return "⛔️";
+			case 39: return "🧱";
 			default: return "❔";
 		}
 	}
@@ -802,6 +807,8 @@ function getRoom($id, $emoji = false) {
             case 35: return "maledizione";
             case 36: return "crepaccio";
             case 37: return "polvere";
+			case 38: return "vicolo";
+			case 39: return "walltrap";
 			default: return "?";
 		}
 	}
@@ -847,20 +854,22 @@ function getColorOfRoom($id) {
         case 35: return "#110000";
         case 36: return "#d8c68f";
         case 37: return "#bbbbbb";
+		case 38: return "#202021";
+		case 39: return "#7a5353";
 		default: return "#eeeeee";
 	}
 }
 
 function lootItems() {
 	global $token;
-	global $userbot;
-	$q = mysql_query("SELECT UNIX_TIMESTAMP(time_ins) FROM items WHERE 1 LIMIT 1");
-	if (mysql_num_rows($q) == 0 or (mysql_fetch_row($q)[0] < (time() - 60*60*12))) {
+	global $mysqli;
+	$q = mysqli_query($mysqli,"SELECT UNIX_TIMESTAMP(time_ins) FROM items WHERE 1 LIMIT 1");
+	if (mysqli_num_rows($q) == 0 or (mysqli_fetch_row($q)[0] < (time() - 60*60*12))) {
 		include "update_items.php";
 	}
-	$q = mysql_query("SELECT * FROM items WHERE 1");
+	$q = mysqli_query($mysqli,"SELECT * FROM items WHERE 1");
 	$lista = [];
-	while ($b = mysql_fetch_assoc($q)) {
+	while ($b = mysqli_fetch_assoc($q)) {
 		$lista[] = $b;
 	}
 	return $lista;
@@ -886,11 +895,12 @@ function getMateriali($itemID) {
 		return false;
 	if ($itemID == 0)
 		return false;
-	$q = mysql_query("SELECT * FROM items WHERE id=$itemID");
-	$n = mysql_num_rows($q);
+	global $mysqli;
+	$q = mysqli_query($mysqli,"SELECT * FROM items WHERE id=$itemID");
+	$n = mysqli_num_rows($q);
 	if ($n<1)
 		return false;
-	$s = mysql_fetch_assoc($q);
+	$s = mysqli_fetch_assoc($q);
 	if ($s['craftable'] == 0) return array();
 	return array($s['material_1'],$s['material_2'],$s['material_3']);
 }
@@ -900,27 +910,39 @@ function getName($itemID) {
 		return false;
 	if ($itemID == 0)
 		return false;
-	$q = mysql_query("SELECT * FROM items WHERE id=$itemID");
-	$n = mysql_num_rows($q);
+	global $mysqli;
+	$q = mysqli_query($mysqli,"SELECT * FROM items WHERE id=$itemID");
+	$n = mysqli_num_rows($q);
 	if ($n<1)
 		return false;
-	$s = mysql_fetch_assoc($q);
-	return utf8_encode($s['name']);
+	$s = mysqli_fetch_assoc($q);
+	return $s['name'];
 }
 
-function craft_list_id($itemID) {
+function craft_list_id($itemID, $n_item) {
 	if (!$itemID or $itemID<0)
 		return false;
 	if ($itemID == 0)
 		return false;
-	$materiali = getMateriali($itemID);
+	$materiali = array();
+	for($i=0;$i<$n_item;$i++)
+	{
+		$tempmat = getMateriali($itemID);
+		if(is_array($tempmat))
+			$materiali = array_merge($materiali, $tempmat);
+			//foreach($tempmat as $mat)
+			//	$materiali[] = $mat;
+	}
 	if (count($materiali) == 0)
 		return "";
 	foreach ($materiali as $matID) {
-		$temp_l = craft_list_id($matID);
+		$temp_l = craft_list_id($matID, 1);
 		if ($temp_l and strlen($temp_l)>0) $mat_list[] = $temp_l;
 	}
-	return (count($mat_list)>0 ? implode("\n", $mat_list)."\n" : "").getName($itemID);
+	$rettxt = (count($mat_list)>0 ? implode("\n", $mat_list)."\n" : "");
+	for($i=0;$i<$n_item;$i++)
+		$rettxt .= getName($itemID)."\n";
+	return substr($rettxt,0,strlen($rettxt)-1);
 }
 
 function mat_list_id_id($itemID) {
@@ -938,17 +960,43 @@ function mat_list_id_id($itemID) {
 	return (count($mat_list)>0 ? implode("\n", $mat_list) : "$itemID");
 }
 
-function craft_list($item) {
+function craft_list($item, $n_item=1) {
 	if (!$item or strlen($item)<1)
 		return false;
-	$item = preg_replace("/[^a-zA-Z0-9 ']/", "", $item);
+	$item = preg_replace("/[^\w\dàèìòù ']/", "", $item);
 	$itemID = getID($item);
 	if ($itemID == "n/a (not found)") {
 		return false;
 	}
-	$cl = craft_list_id($itemID);
+	$cl = craft_list_id($itemID, $n_item);
 	if (!$cl or $cl == "") {
 		return "Cerca *$item";
+	}
+	$list_a = array_count_values(explode("\n", $cl));
+	$text="";
+	foreach ($list_a as $item_c => $times) {
+		while ($times > 3) {
+			$text.="Crea $item_c,3\n";
+			$times-=3;
+		};
+		if ($times==1)
+			$text.="Crea $item_c\n";
+		else if ($times>0)
+			$text.="Crea $item_c,$times\n";
+	}
+	return $text;
+}
+
+function craft_list_fast($IDlist) {
+	if (!isset($IDlist) or count($IDlist)<1)
+		return "rip";
+	$cl = "";
+	foreach ($IDlist as $itemID) {
+		$cl .= craft_list_id($itemID);
+		if (!$cl or $cl == "") {
+			return "fuck";
+		}
+		$cl .= "\n";
 	}
 	$list_a = array_count_values(explode("\n", $cl));
 	$text="";
@@ -968,7 +1016,7 @@ function craft_list($item) {
 function craft_list_raw($item) {
 	if (!$item or strlen($item)<1)
 		return false;
-	$item = preg_replace("/[^a-zA-Z0-9 ']/", "", $item);
+	$item = preg_replace("/[^\w\dàèìòù ']/", "", $item);
 	$itemID = getID($item);
 	if ($itemID == "n/a (not found)") {
 		return false;
@@ -1034,7 +1082,7 @@ function check_name($name)
     else {
     	$stream = file_get_contents("lootplayers.json");
     	if ($stream==false) {
-    		$giocatori = richiestaAPI("https://whigo.it/edoporting/api/v2/$token/players");
+    		$giocatori = richiestaAPI("https://fenixweb.net:6600/api/v2/$token/players");
     		$nomefile = "lootplayers.json";
 			$fptr = fopen($nomefile, 'w');
 			fwrite($fptr, ((string) time())."@giocatori@".$giocatori);
@@ -1045,7 +1093,7 @@ function check_name($name)
     	$last=(int) $rawdata[0];
    		$last = ((int) time())-$last;
     	if ($last>86400) {
-    		$giocatori = richiestaAPI("https://whigo.it/edoporting/api/v2/$token/players");
+    		$giocatori = richiestaAPI("https://fenixweb.net:6600/api/v2/$token/players");
     		$nomefile = "lootplayers.json";
 			$fptr = fopen($nomefile, 'w');
 			fwrite($fptr, ((string) time())."@giocatori@".$giocatori);
@@ -1085,4 +1133,9 @@ function chestPrice($rarity)
 		'E' => 30000
 	);
 	return $prices[$rarity] ? $prices[$rarity] : false;
+}
+
+function WriteLog($body, $line)
+{
+	return file_put_contents("error.log", "(".date("d/m/Y H:i:s")."): ".$body." [".$line."]\r\n-----------------\r\n\r\n",FILE_APPEND);
 }

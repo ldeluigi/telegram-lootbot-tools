@@ -1,7 +1,7 @@
 <?php
 echo("Inline by Deloo");
 
-if ($update["inline_query"])
+if (isset($update["inline_query"]))
 {
 $inline = $update["inline_query"]["id"];
 $msg = $update["inline_query"]["query"];
@@ -100,25 +100,35 @@ function qr($result, $line, $desc = "Clicca qui per fare il prossimo", $buttonTe
 	}
 }
 
-$s = mysql_query("SELECT * FROM $userbot WHERE userID=$userID");
-if (mysql_num_rows($s)===0) {
-    mysql_query("INSERT INTO $userbot (userID, username) VALUES ($userID, \"$username\")");
-    $s = mysql_query("SELECT * FROM $userbot WHERE userID=$userID");
+$s = mysqli_query($mysqli, "SELECT * FROM $userbot WHERE userID=$userID");
+if (mysqli_num_rows($s)===0) {
+    mysqli_query($mysqli, "INSERT INTO $userbot (userID, username) VALUES ($userID, \"$username\")");
+    $s = mysqli_query($mysqli, "SELECT * FROM $userbot WHERE userID=$userID");
 }
-$arr = mysql_fetch_assoc($s);
+$arr = mysqli_fetch_assoc($s);
 $line_n = $arr['crafting_index'];
 $fname = $arr['crafting_list'];
 $queries = $arr['query_inviate'];
 $queries++;
-mysql_query("UPDATE $userbot SET query_inviate=$queries WHERE userID=$userID");
+mysqli_query($mysqli, "UPDATE $userbot SET query_inviate=$queries WHERE userID=$userID");
 if ($msg == "reset") {
 	qm("Lista pulita.");
-	mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
+	mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
 }
 else if (!$fname or $fname == "") {
 	$dir = 'Lists/';
 	$item = $msg;
-	$text= craft_list($item);
+	$n_item = 1;
+	if(preg_match('/^\d+:/',$item) === 1)
+	{
+		$qry_elems = explode(':', $item, 2);
+		if(count($qry_elems) > 1)
+		{
+			$n_item = $qry_elems[0];
+			$item = $qry_elems[1];
+		}
+	}
+	$text= craft_list($item, $n_item);
 	if (!$text or $text == "")
 		qm("Non stai seguendo nessuna lista.");
 	else {
@@ -133,13 +143,13 @@ else if (!$fname or $fname == "") {
 		}
 		$fname = $dir."_".strtolower($item."--".time()."--.txt");
 		file_put_contents($fname, $text);
-		mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"$fname\" WHERE userID=$userID");
+		mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"$fname\" WHERE userID=$userID");
 		
 		
 		$file = file($fname);
 		if ($line_n >= count($file)) {
 			qm("Finito. Clicca qui per tornare a tools, altrimenti chiudi la query.", ["Torna al menu"]);
-			mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
+			mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
 		}
 		else {
 			$next_c = $file[$line_n];
@@ -154,7 +164,7 @@ else if (!$fname or $fname == "") {
 }
 else if (!file_exists($fname)) {
 	qm("Mi spiace, ma la lista che seguivi non esiste più.");
-	mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
+	mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
 }
 else {
 	if (strpos($msg, "+")===0) {
@@ -168,16 +178,16 @@ else {
 		}
 		else
 			$line_n++;
-		mysql_query("UPDATE $userbot SET crafting_index=$line_n WHERE userID=$userID");
+		mysqli_query($mysqli,"UPDATE $userbot SET crafting_index=$line_n WHERE userID=$userID");
 	} else if (strpos($msg, "-")===0) {
 		$line_n--;
 		if ($line_n<1) $line_n=1;
-		mysql_query("UPDATE $userbot SET crafting_index=$line_n WHERE userID=$userID");
+		mysqli_query($mysqli,"UPDATE $userbot SET crafting_index=$line_n WHERE userID=$userID");
 	}
 	$file = file($fname);
 	if ($line_n >= count($file)) {
-			qm("Finito. Clicca qui per tornare a tools, altrimenti chiudi la query.", [["Torna al menu", "Clicca per tornare al menu"], ["Contrabbandiere", "Clicca per il contrabbandiere"]]);
-			mysql_query("UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
+			qm("Finito. Clicca qui per tornare a tools, altrimenti chiudi la query.", [["Torna al menu", "Clicca per tornare al menu"], ["Contrabbandiere", "Clicca per il contrabbandiere"], ["Torna al dungeon", "Clicca per il dungeon"]]);
+			mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
     }
 	else {
 			$next_c = $file[$line_n];
