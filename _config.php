@@ -15,8 +15,9 @@ $config = array(
 );
 
 
+// fuso orario
+date_default_timezone_set("Europe/Rome");
 
-//non toccare
 require 'functions.php';
 
 

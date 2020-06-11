@@ -716,8 +716,11 @@ function searchStrings($r) {
 }
 
 function getRoom($id, $emoji = false) {
-	if ($id<0 and ((int) date("G")) < 8)
-		$id -= 5;
+	//if ($id<0 and ((int) date("G")) < 8)
+	//	$id -= 5;
+	if ($id > 1000) {
+		return getRoom($id - 2000, $emoji) . ($emoji ? "⁉️" : "(?)");
+	}
 	if ($emoji) {
 		if  ($id<=-70) return "☠️";
 		if  ($id<=-50) return "👺";
@@ -764,6 +767,7 @@ function getRoom($id, $emoji = false) {
             case 37: return "🌪️";
 			case 38: return "⛔️";
 			case 39: return "🧱";
+			case 40: return "📒";
 			default: return "❔";
 		}
 	}
@@ -809,6 +813,7 @@ function getRoom($id, $emoji = false) {
             case 37: return "polvere";
 			case 38: return "vicolo";
 			case 39: return "walltrap";
+			case 40: return "figurine";
 			default: return "?";
 		}
 	}
@@ -816,6 +821,9 @@ function getRoom($id, $emoji = false) {
 
 function getColorOfRoom($id) {
 	if ($id<0) return "#6E381E";
+	if ($id > 1000) {
+		$id = 26;
+	}
 	switch ($id) {
 		case 1: return "#6E381E";
 		case 2: return "#CCCCCC";
@@ -856,6 +864,7 @@ function getColorOfRoom($id) {
         case 37: return "#bbbbbb";
 		case 38: return "#202021";
 		case 39: return "#7a5353";
+		case 40: return "#ffffb3";
 		default: return "#eeeeee";
 	}
 }
@@ -930,8 +939,6 @@ function craft_list_id($itemID, $n_item) {
 		$tempmat = getMateriali($itemID);
 		if(is_array($tempmat))
 			$materiali = array_merge($materiali, $tempmat);
-			//foreach($tempmat as $mat)
-			//	$materiali[] = $mat;
 	}
 	if (count($materiali) == 0)
 		return "";
@@ -1124,13 +1131,21 @@ function check_name($name)
 
 function chestPrice($rarity)
 {
-	$prices = array(
+	/*$prices = array(
 		'C' => 1200,
 		'NC' => 2400,
 		'R' => 4800,
 		'UR' => 7200,
 		'L' => 14000,
 		'E' => 30000
+	);*/
+	$prices = array(
+		'C' => 2500,
+		'NC' => 5000,
+		'R' => 10000,
+		'UR' => 15000,
+		'L' => 30000,
+		'E' => 50000
 	);
 	return $prices[$rarity] ? $prices[$rarity] : false;
 }

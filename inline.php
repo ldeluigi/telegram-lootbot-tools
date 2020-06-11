@@ -186,7 +186,7 @@ else {
 	}
 	$file = file($fname);
 	if ($line_n >= count($file)) {
-			qm("Finito. Clicca qui per tornare a tools, altrimenti chiudi la query.", [["Torna al menu", "Clicca per tornare al menu"], ["Contrabbandiere", "Clicca per il contrabbandiere"], ["Torna al dungeon", "Clicca per il dungeon"]]);
+			qm("Finito. Clicca qui per tornare a tools, altrimenti chiudi la query.", [["Torna al menu", "Clicca per tornare al menu"], ["Contrabbandiere", "Clicca per il contrabbandiere"], ["Torna al dungeon", "Clicca per il dungeon"], ["Assalto", "Clicca per Assalto"]]);
 			mysqli_query($mysqli, "UPDATE $userbot SET crafting_index=0,crafting_list=\"\" WHERE userID=$userID");
     }
 	else {

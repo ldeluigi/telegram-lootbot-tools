@@ -6,6 +6,9 @@ if ($msg == "/start")
 {
 sm($chatID, "Ciao, sono ToolsForLootBot! Per un elenco completo delle funzioni digita /help.\n\nStatistiche: /info\n\nCanale ufficiale: @ToolsUpdates");
 }
+else if ($msg == "/time") {
+	sm($chatID, date('l jS \of F Y h:i:s A'));
+}
 else if ($msg == "/help") {
 	/*if (isset($cbid)) cb_reply($cbid, "Sei tornato all'help", false, $cbmid, false, true);
 	$text = "<b>Funzioni:</b>\n\n1. Inoltra una lista di item necessari da @craftlootbot anche specificandone il prezzo in fondo ad ogni riga e creerò le stringhe per i negozi\n\n<i>Se il prezzo è minore di 100 viene moltiplicato per 1000</i>\n\n2. Inoltra lo zaino con [opzionale] il prezzo in fondo per le stringhe dei negozi divise per rarità\n\n3. Fai <i>/ricerca Rarità</i> per ottenere le stringhe di una determinata rarità da cercare\n\n";
@@ -70,6 +73,11 @@ else if ($msg == "/help6") {
 	sm($chatID, $text, array(array(array("text" => "Pagina iniziale", "callback_data" => "/help"))));
 }
 else if ($msg == "/help7") {
+	/*
+	<b>• Ricerca di un Drago</b>
+	<i>Specialmente durante le vette, può essere utile conoscere la vocazione del giocatore dietro un particolare drago. Inoltrando la scheda di un giocatore (</i><code>/spia</code><i>, dal plus), le informazioni per il drago verranno salvate nel Tools ed accessibili a chiunque!</i>
+	Comando: /drago [nome_drago] -> per ricercare ed eventualmente ottenere info su un particolare drago
+	*/
 	if (isset($cbid)) cb_reply($cbid, "Help Miscellaneo 💱", false, $cbmid, false, true);
 	$text = "
 <b>💱 Funzionalità Aggiuntive</b>
@@ -78,10 +86,6 @@ else if ($msg == "/help7") {
 <b>• Imprese Globali</b>
 <i>Il tools tiene traccia dell'andamento delle imprese globali!</i>
 Comando: /globale -> per un grafico aggiornato giornalmente ogni 30 minuti
-
-<b>• Ricerca di un Drago</b>
-<i>Specialmente durante le vette, può essere utile conoscere la vocazione del giocatore dietro un particolare drago. Inoltrando la scheda di un giocatore (</i><code>/spia</code><i>, dal plus), le informazioni per il drago verranno salvate nel Tools ed accessibili a chiunque!</i>
-Comando: /drago [nome_drago] -> per ricercare ed eventualmente ottenere info su un particolare drago
 
 <b>• Danni ai Boss</b>
 <i>Ottenere una lista dei membri ordinata in base al danno al boss corrente</i>
@@ -692,6 +696,7 @@ else if (strpos($msg, "/prezzo")===0) {
 		sm($chatID, $text);
 	}
 }
+/*
 else if (strpos($msg, "/drago")===0) {
 	$name = substr($msg, strlen("/drago "));
     if ((!$name) or strlen($name) < 1)
@@ -729,6 +734,7 @@ else if (strpos($msg, "/drago")===0) {
 		sm($chatID, $text);
 	}
 }
+*/
 else if (strpos($msg, "/cancellamappa")===0) {
 	$s = mysqli_query($mysqli, "SELECT * FROM ToolsForLootBot WHERE userID=$userID");
 	if (mysqli_num_rows($s)===0) {
@@ -865,11 +871,12 @@ else if (strpos($msg, "/globale")===0) {
 		$intervals = ((int) date('t', $now))*24;
 		$month_end = strtotime('+1 month',strtotime(date('m', $now).'/01/'.date('Y', $now).' 00:00:00'));
 		$month_start = strtotime(date('m', $now).'/01/'.date('Y', $now).' 00:00:00') + 1;
-		$sampling = ($month_end - $month_start) / $intervals;
+		$sampling = 3600;//($month_end - $month_start) / $intervals;
 		$ydata = [];
 		$xdata = [];
 		$cleanydata = [];
 		$perfect_line_data = [];
+		
 		for ($i = 0; $i<$intervals; $i++) {
 			$xdata[$i] = date("d", $month_start + $i * $sampling);
 			$ydata[$i] = '';
@@ -900,7 +907,7 @@ else if (strpos($msg, "/globale")===0) {
 		$vertical_stop = 0;
 		
 		if ($nocap and $global_cap == 0) {
-			$global_cap = (int) round($global_tot * 2.5);
+			$global_cap = (int) round($global_tot * 2.5); // custom costant
 		}
 		for ($i = 0; $i<$intervals; $i++) {
 			$prevision[$i] = round($i * $retta_minimi_errori['slope']  + $retta_minimi_errori['intercept']);
@@ -1009,8 +1016,10 @@ else if (strpos($msg, "/globale")===0) {
 			$line = new PlotLine(VERTICAL,$vertical_stop,"lightgray",2);
 			$graph->AddLine($line);
 		} else {
-			if (true or $nocap) {
+			if ($nocap) {
 				$t = new Text("ATTENZIONE: Cap globale fittizio. Il vero cap della globale e' sconosciuto.",$width-5,33);
+			} else if($vertical_stop <= 0) {
+				$t = new Text("ATTENZIONE: Secondo le previsioni sugli ultimi 4 giorni la globale fallisce.",$width-5,33);
 			} else {
 				$quote = json_decode(file_get_contents('Res/quotes.json'), true);
 				$iii = mt_rand(0, count($quote)-1);
@@ -1035,6 +1044,7 @@ else if (strpos($msg, "/globale")===0) {
     $this_month = date("n");
 	$this_year = date("Y");
 	mysqli_query($msqli, "DELETE FROM global WHERE (year<$this_year AND ($this_month>1 OR month=11)) OR (month<($this_month-1))");
+
 }
 /*else if (strpos($msg, "/test")===0) {
 $s = mysqli_query($mysqli, "SELECT * FROM ToolsForLootBot WHERE userID=$userID");
@@ -1273,7 +1283,7 @@ mb_internal_encoding("UTF-8");
 if (mb_strpos($msg, ">")!==false and mb_strpos($msg, "viandante")===false) {
 	if (mb_strpos($msg, "migliorare la postazione")!==false && $inoltrato) {//migliora postazione
 		$res = mb_ereg_replace("> ", ",", $msg);
-		$res = mb_ereg_replace("\n[^🚫]*✅\n", "\n", $res);
+		$res = mb_ereg_replace("\n[^🚫]*✅( 📦)?\n", "\n", $res);
 		$res = mb_ereg_replace("^.*?,", "/craft\n", $res);
 		$res = mb_ereg_replace(" \(.+?\) (\d+?)\/(\d+?) 🚫", "\":\".(\\2 - \\1)", $res, 'e');
 		$res = mb_ereg_replace("\n*Continuare\?$", "", $res);
@@ -1451,7 +1461,7 @@ if (mb_strpos($msg, ">")!==false and mb_strpos($msg, "viandante")===false) {
 								}
 							}
 							if ($quantity==0) {
-								if (mb_strpos($slices[1], "/") !== false) {
+								if (mb_strpos($slices[1], "/") !== false && mb_strpos($slices[1], "✅") === false) {
 									$ar_slash = explode('/', $slices[1]);
 									$aft_slash_space = explode(' ', $ar_slash[1]);
 									$quantity = ((int) filter_var($aft_slash_space[0], FILTER_SANITIZE_NUMBER_INT)) - ((int) filter_var($ar_slash[0], FILTER_SANITIZE_NUMBER_INT));
@@ -1615,6 +1625,7 @@ if ($inoltrato and $inoltrato_id==280391978 and $document and endswith($document
 
 if ($inoltrato and ($inoltrato_id==171514820 or $inoltrato_id==236880746)) {
 	if (mb_strpos($msg, "Giocatore ")===0 or mb_strpos($msg, "Giocatrice ")===0) {
+		/*
 		$nickname = mb_substr($msg, mb_strpos($msg, "\n") + 1);
         $nickname = mb_substr($nickname, mb_strpos($nickname, " ") + 1);
 		$nickname = mb_substr($nickname, 0, max(min(mb_strpos($nickname, " "), mb_strpos($nickname, "\n")), 1));
@@ -1646,6 +1657,7 @@ if ($inoltrato and ($inoltrato_id==171514820 or $inoltrato_id==236880746)) {
 				} else sm($chatID, "Questa scheda non è abbastanza recente ed è stata ignorata.", false, 'pred', false, $idmsg);
 			} else sm($chatID, "Questo nickname non esiste. L'utente potrebbe aver migrato account.");
         }
+		*/
 	}
 	else if(mb_strpos($msg, "Stai per inviare uno gnomo servitore al rifugio di ")===0) {
 		$emoji_vocazione = mb_substr($msg, 51, 1);
@@ -1724,17 +1736,23 @@ if ($inoltrato and $inoltrato_id==171514820) {
 				break;
 				case "Il Cratere Ventoso": $stanze = 30;
 				break;
-				case "Il Deserto Rosso": $stanze = 40;
+				case "Il Deserto Rosso": $stanze = 35;
 				break;
-				case "La Foresta Maledetta": $stanze = 45;
+				case "La Foresta Maledetta": $stanze = 40;
 				break;
-				case "La Vetta delle Anime": $stanze = 50;
+				case "La Vetta delle Anime": $stanze = 45;
 				break;
-				case "Il Lago Evanescente": $stanze = 55;
+				case "Il Lago Evanescente": $stanze = 50;
 				break;
 				case "Il Labirinto Spettrale": $stanze = 60;
 				break;
-				case "La Vallata Impervia": $stanze = 75;
+				case "La Vallata Impervia": $stanze = 70;
+				break;
+				case "La Torre Nebbiosa": $stanze = 80;
+				break;
+				case "L'Altopiano Selvaggio": $stanze = 90;
+				break;
+				case "Il Dedalo Infinito": $stanze = 100;
 				break;
 				default: $stanze = 0;
 			}
@@ -1759,12 +1777,10 @@ if ($inoltrato and $inoltrato_id==171514820) {
 				}
 				$cloni = mysqli_query($mysqli, "SELECT * FROM dungeon WHERE ID=\"$dungeon_ID\"");
 				if (mysqli_num_rows($cloni)==0) {
-					mysqli_query($mysqli, "INSERT INTO dungeon (ID, creatorID, owner, rooms) VALUES (\"$dungeon_ID\", $userID, \"$owner\", $stanze)");
+					mysqli_query($mysqli, "INSERT INTO dungeon (ID, creatorID, owner, rooms, name) VALUES (\"$dungeon_ID\", $userID, \"$owner\", $stanze, \"$nuova_istanza\")");
 					mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:0\", page=\"dungeon\" WHERE userID=$userID");
 					sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon $nuova_istanza. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
-					//pulizia obsoleti
-					$week_ago = date ("Y-m-d H:i:s", time() - 60*60*24*7);
-					mysqli_query($mysqli, "DELETE FROM dungeon WHERE time<\"$week_ago\"");
+					mysqli_query($mysqli, "DELETE FROM dungeon WHERE time < NOW() - INTERVAL (rooms * 144) MINUTE");
 				}
 				else {
 					if ($vecchio_dungeon_ID and $vecchio_dungeon_ID==$dungeon_ID) {
@@ -1883,6 +1899,7 @@ if ($inoltrato and $inoltrato_id==171514820) {
 					if (mysqli_num_rows($d) == 1) {
 						$d_arr = mysqli_fetch_assoc($d);
 						$stanze = $d_arr['rooms'];
+						$nome_dungeon = $d_arr['name'];
 						$riepilogo = true;
 						if (strpos($msg, "Stanza ")===0) {
 							$cerca_num = substr($msg, 7, strpos($msg, "/") - 7);
@@ -1921,14 +1938,19 @@ if ($inoltrato and $inoltrato_id==171514820) {
 								$livello = abs((int) filter_var($fino_virgola, FILTER_SANITIZE_NUMBER_INT));
 								$ora = (int) date("G", $inoltrato_time);
 								if ($ora<7) {
-									$_livello = "$livello ridotto a ".((string) $livello - 5)." per via della luna,";
 									$livello -= 5;
+									$_livello = "$livello ridotto a ".((string) $livello)." per via della luna,";
 									if ($livello<=0) $livello = 1;
 								}
 								else
 									$_livello = (string) $livello;
-								$contenuto = -$livello;
-								sm($chatID, "Ho inserito un mostro di livello $_livello nella stanza $numero/$stanze ($direzione)");
+								if ($_livello >= 1000) {
+									$contenuto = 1;
+									sm($chatID, "Ho inserito un mostro nella stanza $numero/$stanze ($direzione). Il livello del mostro è inaspettatamente alto. Contatta @Delooo e avvisalo di questo fatto, grazie.");
+								} else {
+									$contenuto = -$livello;
+									sm($chatID, "Ho inserito un mostro di livello $_livello nella stanza $numero/$stanze ($direzione)");
+								}
 							}
 							else {
 								$contenuto = 1;
@@ -1943,7 +1965,7 @@ if ($inoltrato and $inoltrato_id==171514820) {
 							$raw_stanza = substr($raw_stanza, 0, strpos($raw_stanza, ", buon divertimento!"));
 							$stanza_sost = (int) filter_var($raw_stanza, FILTER_SANITIZE_NUMBER_INT);
 							sm($chatID, "Ho segnalato la sostituzione della stanza $stanza_sost di questo dungeon.");
-							if ($stanza_sost and $stanza_sost>0 and $stanza_sost<=$stanze) mysqli_query($mysqli, "UPDATE dungeon SET L$stanza_sost=26,C$stanza_sost=26,R$stanza_sost=26 WHERE ID=\"$dungeon_ID\"");
+							if ($stanza_sost and $stanza_sost>0 and $stanza_sost<=$stanze) mysqli_query($mysqli, "UPDATE dungeon SET L$stanza_sost=L$stanza_sost+2000,C$stanza_sost=C$stanza_sost+2000,R$stanza_sost=R$stanza_sost+2000 WHERE ID=\"$dungeon_ID\"");
 						}
 						else if (strpos($msg, "ti ritrovi in un ambiente aperto, con alberi e liane") !== false) {
 							$contenuto = 2;
@@ -2127,17 +2149,21 @@ if ($inoltrato and $inoltrato_id==171514820) {
 							$contenuto = 39;
 							sm($chatID, "Ho inserito una trappola sul muro in posizione $numero/$stanze ($direzione)");
 							mysqli_query($mysqli, "UPDATE dungeon SET $dungeon_stanza=39 WHERE ID=\"$dungeon_ID\"");
+						}else if (strpos($msg, "migliaia di Figurine") !== false) {
+							$contenuto = 40;
+							sm($chatID, "Ho inserito una stanza con figurine in posizione $numero/$stanze ($direzione)");
+							mysqli_query($mysqli, "UPDATE dungeon SET $dungeon_stanza=40 WHERE ID=\"$dungeon_ID\"");
 						}
 						else {
 							$contenuto = 0;
 							sm($chatID, "Non conosco questa stanza, mi dispiace. Se vuoi che venga aggiunta contatta l'amministratore @Delooo.");
 						}
 						//Rimando il riepilogo
-						if ($numero == 0 and $riepilogo) {
-							sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+						if ($numero == 0 and isset($riepilogo) and $riepilogo) {
+							sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 						}
-						else if (isset($riepilogo)) {
-							sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);					
+						else if (isset($riepilogo) and $riepilogo) {
+							sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);					
 						}
 					}
 					else {
@@ -2206,6 +2232,7 @@ if ($msg == "🗺") {
 		if (mysqli_num_rows($d) == 1) {
 			$d_arr = mysqli_fetch_assoc($d);
 			$stanze = $d_arr['rooms'];
+			$nome_dungeon = $d_arr['name'];
 			for ($i=1; $i<=$stanze; $i++) {
 				$ii = $i<10 ? "0$i" : "$i";
 				if ($dungeon_stanza == "L$i") {
@@ -2224,7 +2251,7 @@ if ($msg == "🗺") {
 			sm($chatID, $testo);
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			if ($numero == 0) {
-				sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 			}
 			else {
 				if ($dungeon_stanza == "L$numero") {
@@ -2238,7 +2265,7 @@ if ($msg == "🗺") {
 				}
 				else $direzione = "???";
 				$contenuto = $d_arr["$dungeon_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);					
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 			}
 		}
 	}
@@ -2259,6 +2286,7 @@ else if ($msg=="🌐") {
 		if (mysqli_num_rows($d) == 1) {
 			$d_arr = mysqli_fetch_assoc($d);
 			$stanze = $d_arr['rooms'];
+			$nome_dungeon = $d_arr['name'];
 			$scoperte = 0;
 			$ignote = 0;
 			for ($i=1; $i<=$stanze; $i++) {
@@ -2266,7 +2294,7 @@ else if ($msg=="🌐") {
 				$scoperte += $_scoperte;
 				$ignote += 3 - $_scoperte;
 			}
-			sm($chatID, "Stanze mappate: $scoperte\nStanze mancanti: $ignote\nLunghezza del dungeon: $stanze\n\nCodice condivisione: ".$dungeon_ID, array(array(array("text" => "Grafico", "callback_data" => "/grafico"), array("text" => "Partecipanti", "callback_data" => "/mates"))));
+			sm($chatID, "Dungeon: $nome_dungeon\nStanze mappate: $scoperte\nStanze mancanti: $ignote\nLunghezza del dungeon: $stanze\n\nCodice condivisione: ".$dungeon_ID, array(array(array("text" => "Grafico", "callback_data" => "/grafico"), array("text" => "Partecipanti", "callback_data" => "/mates"))));
 		}
 	}
 }
@@ -2327,6 +2355,7 @@ else if ($msg== "/grafico") {
 			if (mysqli_num_rows($d) == 1) {
 				$d_arr = mysqli_fetch_assoc($d);
 				$stanze = (int) $d_arr['rooms'];
+				$nome_dungeon = $d_arr['name'];
 				$g_data = [];
 				for ($i=1; $i<=$stanze; $i++) {
 					if (!isset($g_data[$d_arr["L$i"] >= 0 ? $d_arr["L$i"] : 1])) $g_data[$d_arr["L$i"] >= 0 ? $d_arr["L$i"] : 1] = 0;
@@ -2336,7 +2365,7 @@ else if ($msg== "/grafico") {
 					$g_data[$d_arr["C$i"] >= 0 ? $d_arr["C$i"] : 1] += 1;
 					$g_data[$d_arr["R$i"] >= 0 ? $d_arr["R$i"] : 1] += 1;
 				}
-				$titolo = "Riepilogo stanze";
+				$titolo = "Riepilogo stanze ($nome_dungeon)";
 				$final_data = [];
 				$final_legend = [];
 				$final_color = [];
@@ -2418,8 +2447,9 @@ else if ($msg=='/dungeon') {
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			$dungeon_data = mysqli_fetch_assoc($d);
 			$stanze = $dungeon_data['rooms'];
+			$nome_dungeon = $dungeon_data['name'];
 			if ($numero == 0) {
-				sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 			}
 			else {
 				if ($dungeon_stanza == "L$numero") {
@@ -2432,8 +2462,8 @@ else if ($msg=='/dungeon') {
 					$direzione = "destra";
 				}
 				else $direzione = "???";
-				$contenuto = $dungeon_data["$dungeon_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
+				$contenuto = $d_arr["$dungeon_stanza"];
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 			}
 			mysqli_query($mysqli, "UPDATE ToolsForLootBot SET page=\"dungeon\" WHERE userID=$userID");
 		}
@@ -2471,6 +2501,7 @@ else if (strpos($msg, "/svuota")===0) {
 			if (mysqli_num_rows($d) == 1) {
 				$d_arr = mysqli_fetch_assoc($d);
 				$stanze = $d_arr['rooms'];
+				$nome_dungeon = $d_arr['name'];
 				$riepilogo = true;
 				if ($numero<=0) {
 					sm($chatID, "Non sei in nessuna stanza effettiva. Avanza per entrare nella prima.");
@@ -2481,11 +2512,11 @@ else if (strpos($msg, "/svuota")===0) {
 					sm($chatID, "Ho svuotato la stanza $numero/$stanze ($direzione)");
 					mysqli_query($mysqli, "UPDATE dungeon SET $dungeon_stanza=0 WHERE ID=\"$dungeon_ID\"");
 				}
-				if ($numero == 0 and $riepilogo) {
-					sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+				if ($numero == 0 and isset($riepilogo) and $riepilogo) {
+					sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 				}
-				else if (isset($riepilogo)) {
-					sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);					
+				else if (isset($riepilogo) and $riepilogo) {
+					sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 				}
 			}
 			else {
@@ -2513,13 +2544,14 @@ else if ($msg=="⬆️") {
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			$dungeon_data = mysqli_fetch_assoc($d);
 			$stanze = $dungeon_data['rooms'];
+			$nome_dungeon = $dungeon_data['name'];
 			$numero++;
 			if ($numero>$stanze) sm($chatID, "Non puoi proseguire, in quanto ti trovi all'ultima stanza.");
 			else {
 				$nuova_stanza = "C".((string) $numero);
 				$direzione = "centro";
 				$contenuto = $dungeon_data["$nuova_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 				mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:$nuova_stanza\" WHERE userID=$userID");
 			}
 		}
@@ -2547,13 +2579,14 @@ else if ($msg=="⬅️") {
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			$dungeon_data = mysqli_fetch_assoc($d);
 			$stanze = $dungeon_data['rooms'];
+			$nome_dungeon = $dungeon_data['name'];
 			$numero++;
 			if ($numero>$stanze) sm($chatID, "Non puoi proseguire, in quanto ti trovi all'ultima stanza.");
 			else {
 				$nuova_stanza = "L".((string) $numero);
 				$direzione = "sinistra";
 				$contenuto = $dungeon_data["$nuova_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 				mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:$nuova_stanza\" WHERE userID=$userID");
 			}
 		}
@@ -2581,13 +2614,14 @@ else if ($msg=="➡️") {
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			$dungeon_data = mysqli_fetch_assoc($d);
 			$stanze = $dungeon_data['rooms'];
+			$nome_dungeon = $dungeon_data['name'];
 			$numero++;
 			if ($numero>$stanze) sm($chatID, "Non puoi proseguire, in quanto ti trovi all'ultima stanza.");
 			else {
 				$nuova_stanza = "R".((string) $numero);
 				$direzione = "destra";
 				$contenuto = $dungeon_data["$nuova_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 				mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:$nuova_stanza\" WHERE userID=$userID");
 			}
 		}
@@ -2614,10 +2648,11 @@ else if ($msg=="⬇️") {
 		if (mysqli_num_rows($d) == 1) {
 			$numero = (int) filter_var($dungeon_stanza, FILTER_SANITIZE_NUMBER_INT);
 			$dungeon_data = mysqli_fetch_assoc($d);
-			$stanze = $dungeon_data['rooms'];			
+			$stanze = $dungeon_data['rooms'];
+			$nome_dungeon = $dungeon_data['name'];
 			if ($numero<=0) sm($chatID, "Non puoi andare più indietro della stanza 0.");
 			else if ($numero==1) {
-				sm($chatID, "$username, ti trovi nella stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 				mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:0\" WHERE userID=$userID");
 			}
 			else {
@@ -2641,7 +2676,7 @@ else if ($msg=="⬇️") {
 					$nuova_stanza = "C1";
 				}
 				$contenuto = $dungeon_data["$nuova_stanza"];
-				sm($chatID, "$username ti trovi nella stanza $numero/$stanze ($direzione)".(($contenuto == 0) ? ", non so cosa contiene. Inoltra il contenuto per impostarlo." : ", che dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
+				sm($chatID, "Stanza: $numero/$stanze ($direzione)\nDungeon: $nome_dungeon\n".(($contenuto == 0) ? "Non so cosa contiene. Inoltra il contenuto per impostarlo." : "Dovrebbe contenere \"".getRoom($contenuto)."\". Se non è così, inoltra il giusto contenuto per aggiornarla." ), $d_menu, 'pred', false, false, false);
 				mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:$nuova_stanza\" WHERE userID=$userID");
 			}
 		}
@@ -2668,7 +2703,8 @@ else if ($msg=="Torna all'inizio") {
 		if (mysqli_num_rows($d) == 1) {
 			$dungeon_data = mysqli_fetch_assoc($d);
 			$stanze = $dungeon_data['rooms'];
-			sm($chatID, "$username, sei ritornato alla stanza 0/$stanze del dungeon. Spostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
+			$nome_dungeon = $dungeon_data['name'];
+			sm($chatID, "Stanza: 0/$stanze\nDungeon: $nome_dungeon\nSpostati liberamente e inoltra le stanze per impostarle nella mappa.", $d_menu, 'pred', false, false, false);
 			mysqli_query($mysqli, "UPDATE ToolsForLootBot SET dungeon=\"$dungeon_ID:0\" WHERE userID=$userID");
 		}
 		else {
